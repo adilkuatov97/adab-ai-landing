@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adab AI — AI-агент для Instagram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--black:#0a0a0a;--white:#f5f2eb;--accent:#c8ff00;--accent2:#ff4d00;--gray:#111111;--gray2:#1e1e1e;--muted:#5a5a5a;--wa:#25D366}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--white);font-family:'Golos Text',sans-serif;font-size:16px;line-height:1.6;overflow-x:hidden;cursor:none}
+.cursor{width:10px;height:10px;background:var(--accent);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:width .15s,height .15s}
+.cursor-ring{width:32px;height:32px;border:1px solid rgba(200,255,0,.4);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:opacity .2s}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:20px 48px;background:rgba(10,10,10,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.05)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-1px;color:var(--white);text-decoration:none}.logo em{font-style:normal;color:var(--accent)}
+.lang-switcher{display:flex;gap:3px;background:rgba(255,255,255,.06);border-radius:100px;padding:4px}
+.lang-btn{background:none;border:none;color:rgba(245,242,235,.4);font-family:'Golos Text',sans-serif;font-size:12px;font-weight:600;padding:5px 13px;border-radius:100px;cursor:none;transition:all .2s;letter-spacing:.05em}
+.lang-btn.active{background:var(--accent);color:var(--black)}
+
+/* LANG SYSTEM */
+[data-lang]{display:none}[data-lang].on{display:block}
+span[data-lang].on{display:inline}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:140px 48px 100px;position:relative;overflow:hidden}
+.hero-noise{position:absolute;inset:0;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");pointer-events:none}
+.hero-glow{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(200,255,0,.08) 0%,transparent 70%);top:-200px;right:-100px;pointer-events:none}
+.hero-glow2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(255,77,0,.06) 0%,transparent 70%);bottom:-100px;left:-100px;pointer-events:none}
+
+.tag{display:inline-flex;align-items:center;gap:8px;background:rgba(200,255,0,.08);border:1px solid rgba(200,255,0,.2);color:var(--accent);font-size:12px;font-weight:600;padding:7px 16px;border-radius:100px;margin-bottom:36px;width:fit-content;letter-spacing:.08em;text-transform:uppercase}
+.tag-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.hero-h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(52px,8.5vw,116px);line-height:.93;letter-spacing:-4px;max-width:950px;margin-bottom:32px}
+.hero-h1 em{font-style:normal;color:var(--accent)}
+
+.hero-p{font-size:clamp(16px,1.8vw,20px);color:rgba(245,242,235,.45);max-width:500px;line-height:1.6;margin-bottom:48px}
+
+.cta-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.btn-wa{display:inline-flex;align-items:center;gap:10px;background:var(--wa);color:#fff;text-decoration:none;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;padding:15px 30px;border-radius:100px;transition:transform .2s,box-shadow .2s}
+.btn-wa:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(37,211,102,.3)}
+.btn-wa svg{width:18px;height:18px;flex-shrink:0}
+.btn-ghost{display:inline-flex;align-items:center;gap:6px;color:rgba(245,242,235,.6);text-decoration:none;font-size:14px;font-weight:500;padding:15px 22px;border-radius:100px;border:1px solid rgba(255,255,255,.1);transition:border-color .2s,color .2s}
+.btn-ghost:hover{border-color:rgba(255,255,255,.3);color:var(--white)}
+
+.hero-stats{display:flex;gap:56px;margin-top:88px;padding-top:56px;border-top:1px solid rgba(255,255,255,.07);flex-wrap:wrap}
+.stat-n{font-family:'Syne',sans-serif;font-weight:800;font-size:40px;letter-spacing:-2px;line-height:1;color:var(--white)}
+.stat-n em{font-style:normal;color:var(--accent)}
+.stat-l{font-size:13px;color:var(--muted);margin-top:6px}
+
+/* TICKER */
+.ticker{background:var(--accent);padding:13px 0;overflow:hidden;white-space:nowrap}
+.ticker-track{display:inline-flex;animation:tick 22s linear infinite}
+.ticker-item{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--black);letter-spacing:.06em;text-transform:uppercase;padding:0 28px}
+.ticker-sep{color:rgba(0,0,0,.3);font-size:18px;line-height:1;vertical-align:middle}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* SECTIONS */
+.section{padding:120px 48px}
+.section-label{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.section-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(34px,4.5vw,60px);line-height:1.02;letter-spacing:-2px;max-width:680px;margin-bottom:64px}
+
+/* PROBLEM */
+.bg-gray{background:var(--gray)}
+.prob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.06)}
+.prob-card{background:var(--black);padding:48px 40px;transition:background .3s}
+.prob-card:hover{background:#0e0e0e}
+.prob-big{font-family:'Syne',sans-serif;font-weight:800;font-size:72px;letter-spacing:-3px;line-height:1;color:rgba(255,255,255,.07);margin-bottom:20px}
+.prob-title{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;margin-bottom:12px;line-height:1.2}
+.prob-desc{font-size:14px;color:var(--muted);line-height:1.7}
+.prob-desc strong{color:var(--accent2);font-weight:600}
+
+/* HOW */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid rgba(255,255,255,.07);margin-top:64px}
+.step{padding:40px 32px;border-right:1px solid rgba(255,255,255,.07);transition:background .3s}
+.step:last-child{border-right:none}
+.step:hover{background:rgba(200,255,0,.03)}
+.step-n{font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:var(--accent);letter-spacing:.1em;margin-bottom:20px}
+.step-title{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;margin-bottom:10px;line-height:1.3}
+.step-desc{font-size:13px;color:var(--muted);line-height:1.7}
+.step-badge{display:inline-block;margin-top:16px;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;background:rgba(200,255,0,.08);padding:4px 10px;border-radius:100px}
+
+/* FEATURES */
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,.06)}
+.feat-card{background:var(--black);padding:52px 48px;transition:background .3s}
+.feat-card:hover{background:#0e0e0e}
+.feat-card.wide{grid-column:span 2;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.feat-icon{font-size:28px;margin-bottom:24px;display:block}
+.feat-title{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;margin-bottom:12px;line-height:1.2;letter-spacing:-.5px}
+.feat-desc{font-size:14px;color:var(--muted);line-height:1.75}
+.feat-tag{display:inline-block;margin-top:18px;background:rgba(200,255,0,.08);border:1px solid rgba(200,255,0,.15);color:var(--accent);font-size:11px;font-weight:700;padding:4px 12px;border-radius:100px;letter-spacing:.06em;text-transform:uppercase}
+
+/* CHAT */
+.chat{background:#161616;border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,.07)}
+.chat-head{display:flex;align-items:center;gap:10px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:16px}
+.chat-av{width:34px;height:34px;background:linear-gradient(135deg,#c8ff00,#00d084);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#000;font-family:'Syne',sans-serif}
+.chat-info .chat-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px}
+.chat-info .chat-status{font-size:11px;color:var(--wa)}
+.msg{margin-bottom:8px;display:flex;flex-direction:column}
+.msg.u{align-items:flex-end}.msg.b{align-items:flex-start}
+.bubble{max-width:82%;padding:9px 13px;border-radius:14px;font-size:12px;line-height:1.55}
+.msg.u .bubble{background:#1e2040;color:var(--white);border-bottom-right-radius:3px}
+.msg.b .bubble{background:#112212;color:var(--white);border-bottom-left-radius:3px}
+.msg-t{font-size:10px;color:var(--muted);margin-top:3px;padding:0 3px}
+.typing-dots{display:flex;gap:4px;padding:10px 14px;background:#112212;border-radius:14px;border-bottom-left-radius:3px;width:fit-content}
+.dot{width:5px;height:5px;background:var(--wa);border-radius:50%;animation:dt 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes dt{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+/* CLIENTS */
+.clients-wrap{display:flex;flex-wrap:wrap;gap:10px;margin-top:48px}
+.client-pill{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:100px;padding:9px 18px;font-size:13px;font-weight:500;color:rgba(245,242,235,.55);transition:all .2s}
+.client-pill:hover{border-color:rgba(200,255,0,.25);color:var(--white)}
+
+/* PRICING */
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.06);margin-top:64px}
+.price-card{background:var(--black);padding:48px 40px;position:relative;transition:background .3s}
+.price-card:hover{background:#0e0e0e}
+.price-card.hot{background:var(--white);color:var(--black)}
+.price-card.hot:hover{background:#f0ede6}
+.pop-badge{position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;font-family:'Syne',sans-serif;font-weight:800;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:5px 16px;border-radius:0 0 10px 10px}
+.plan-name{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:28px}
+.price-card.hot .plan-name{color:rgba(0,0,0,.4)}
+.price-amt{font-family:'Syne',sans-serif;font-weight:800;font-size:52px;letter-spacing:-2px;line-height:1;margin-bottom:4px}
+.price-per{font-size:13px;color:var(--muted);margin-bottom:6px}
+.price-card.hot .price-per{color:rgba(0,0,0,.4)}
+.price-setup{font-size:12px;color:var(--muted);margin-bottom:32px;padding-bottom:32px;border-bottom:1px solid rgba(255,255,255,.07)}
+.price-card.hot .price-setup{color:rgba(0,0,0,.4);border-bottom-color:rgba(0,0,0,.1)}
+.feats{list-style:none}
+.feat-row{display:flex;gap:10px;font-size:13px;color:var(--muted);margin-bottom:11px;line-height:1.4}
+.feat-row::before{content:'✓';color:var(--accent);font-weight:700;flex-shrink:0}
+.price-card.hot .feat-row{color:rgba(0,0,0,.55)}
+.price-card.hot .feat-row::before{color:var(--accent2)}
+.price-btn{display:block;margin-top:36px;text-align:center;padding:13px;border-radius:100px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;text-decoration:none;transition:all .2s}
+.price-btn.dark{background:rgba(255,255,255,.06);color:var(--white);border:1px solid rgba(255,255,255,.1)}
+.price-btn.dark:hover{background:rgba(255,255,255,.1)}
+.price-btn.lime{background:var(--accent);color:#000}
+.price-btn.lime:hover{background:#d4ff1a;transform:translateY(-1px)}
+
+/* GUARANTEE */
+.guarantee{background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);padding:40px 48px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.guarantee-text{font-family:'Syne',sans-serif;font-weight:700;font-size:18px}
+.guarantee-sub{font-size:14px;color:var(--muted);margin-top:4px}
+
+/* CTA FINAL */
+.cta-final{background:var(--accent);padding:120px 48px;text-align:center;position:relative;overflow:hidden}
+.cta-final-glow{position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 50% 50%,rgba(255,77,0,.25),transparent 70%);pointer-events:none}
+.cta-h2{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(44px,6.5vw,88px);letter-spacing:-3px;color:#000;line-height:.95;margin-bottom:20px;position:relative}
+.cta-p{font-size:18px;color:rgba(0,0,0,.5);margin-bottom:44px;position:relative}
+.btn-wa-xl{display:inline-flex;align-items:center;gap:12px;background:#000;color:#fff;text-decoration:none;font-family:'Syne',sans-serif;font-weight:700;font-size:17px;padding:18px 44px;border-radius:100px;transition:transform .2s,box-shadow .2s;position:relative}
+.btn-wa-xl:hover{transform:translateY(-3px);box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.btn-wa-xl svg{width:22px;height:22px}
+
+/* FOOTER */
+footer{background:var(--black);padding:40px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.foot-copy,.foot-ig{font-size:13px;color:var(--muted)}
+.foot-ig{text-decoration:none;transition:color .2s}
+.foot-ig:hover{color:var(--white)}
+
+/* FADE IN */
+.fu{opacity:0;transform:translateY(24px);transition:opacity .65s ease,transform .65s ease}
+.fu.in{opacity:1;transform:none}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:16px 20px}
+  .hero{padding:110px 20px 80px}
+  .section{padding:80px 20px}
+  .prob-grid,.steps,.feat-grid,.price-grid{grid-template-columns:1fr}
+  .feat-card.wide{grid-column:span 1;grid-template-columns:1fr}
+  .step{border-right:none;border-bottom:1px solid rgba(255,255,255,.07)}
+  .step:last-child{border-bottom:none}
+  .hero-stats{gap:32px}
+  .guarantee{padding:32px 20px}
+  .cta-final{padding:80px 20px}
+  footer{padding:32px 20px;flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="ring"></div>
+
+<nav>
+  <a href="#" class="logo">Adab<em>AI</em></a>
+  <div class="lang-switcher">
+    <button class="lang-btn active" onclick="setLang('ru')">RU</button>
+    <button class="lang-btn" onclick="setLang('kz')">KZ</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-noise"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+
+  <div class="tag fu">
+    <span class="tag-dot"></span>
+    <span data-lang="ru" class="on">Работает прямо сейчас</span>
+    <span data-lang="kz">Қазір жұмыс істейді</span>
+    <span data-lang="en">Live in production</span>
+  </div>
+
+  <h1 class="hero-h1 fu">
+    <span data-lang="ru" class="on">Пока вы спите —<br><em>бот продаёт</em></span>
+    <span data-lang="kz">Сіз ұйықтап жатқанда —<br><em>бот сатады</em></span>
+    <span data-lang="en">While you sleep —<br><em>bot sells</em></span>
+  </h1>
+
+  <p class="hero-p fu">
+    <span data-lang="ru" class="on">AI-агент для Instagram Direct. Отвечает 24/7, понимает голосовые, квалифицирует лидов автоматически.</span>
+    <span data-lang="kz">Instagram Direct үшін AI-агент. 24/7 жауап береді, дауыстық хабарларды түсінеді.</span>
+    <span data-lang="en">AI sales agent for Instagram Direct. Replies 24/7, understands voice messages, qualifies leads automatically.</span>
+  </p>
+
+  <div class="cta-row fu">
+    <a href="https://wa.me/77715899999" class="btn-wa" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <span data-lang="ru" class="on">Написать в WhatsApp</span>
+      <span data-lang="kz">WhatsApp-қа жазу</span>
+      <span data-lang="en">Write on WhatsApp</span>
+    </a>
+    <a href="#how" class="btn-ghost">
+      <span data-lang="ru" class="on">Как работает →</span>
+      <span data-lang="kz">Қалай жұмыс істейді →</span>
+      <span data-lang="en">How it works →</span>
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="fu">
+      <div class="stat-n">30<em>+</em></div>
+      <div class="stat-l"><span data-lang="ru" class="on">клиентов в Казахстане</span><span data-lang="kz">Қазақстандағы клиенттер</span><span data-lang="en">clients in Kazakhstan</span></div>
+    </div>
+    <div class="fu">
+      <div class="stat-n">97<em>%</em></div>
+      <div class="stat-l"><span data-lang="ru" class="on">маржинальность</span><span data-lang="kz">маржа</span><span data-lang="en">gross margin</span></div>
+    </div>
+    <div class="fu">
+      <div class="stat-n">3<em>с</em></div>
+      <div class="stat-l"><span data-lang="ru" class="on">время ответа</span><span data-lang="kz">жауап уақыты</span><span data-lang="en">response time</span></div>
+    </div>
+    <div class="fu">
+      <div class="stat-n">24<em>/7</em></div>
+      <div class="stat-l"><span data-lang="ru" class="on">без выходных</span><span data-lang="kz">демалыссыз</span><span data-lang="en">no days off</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="ticker-item">Голосовые сообщения <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Казахский язык <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Квалификация лидов <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Telegram-уведомления <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Instagram Direct API <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">5 минут до запуска <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Голосовые сообщения <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Казахский язык <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Квалификация лидов <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Telegram-уведомления <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Instagram Direct API <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">5 минут до запуска <span class="ticker-sep">✦</span></span>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="section bg-gray">
+  <p class="section-label fu"><span data-lang="ru" class="on">Проблема</span><span data-lang="kz">Мәселе</span><span data-lang="en">The problem</span></p>
+  <h2 class="section-title fu"><span data-lang="ru" class="on">Вы теряете клиентов каждый день</span><span data-lang="kz">Сіз күн сайын клиенттерді жоғалтасыз</span><span data-lang="en">You lose clients every single day</span></h2>
+  <div class="prob-grid fu">
+    <div class="prob-card">
+      <div class="prob-big">70%</div>
+      <div class="prob-title"><span data-lang="ru" class="on">Сообщений вне рабочих часов</span><span data-lang="kz">Хабарлар жұмыс уақытынан тыс</span><span data-lang="en">Messages outside work hours</span></div>
+      <p class="prob-desc"><span data-lang="ru" class="on">Клиент пишет в 22:00. Менеджер спит. Утром он уже у конкурента.</span><span data-lang="kz">Клиент 22:00-де жазады. Менеджер ұйықтайды. Таңертең бәсекелесте.</span><span data-lang="en">Client writes at 10 PM. Manager sleeps. By morning they're with a competitor.</span></p>
+    </div>
+    <div class="prob-card">
+      <div class="prob-big">8ч</div>
+      <div class="prob-title"><span data-lang="ru" class="on">Среднее время ответа</span><span data-lang="kz">Орташа жауап уақыты</span><span data-lang="en">Average response time</span></div>
+      <p class="prob-desc"><span data-lang="ru" class="on">Клиенту нужен ответ за <strong>15 минут</strong>. Это не мнение — это статистика Meta.</span><span data-lang="kz">Клиентке <strong>15 минут</strong> ішінде жауап керек. Meta статистикасы.</span><span data-lang="en">Client needs a reply in <strong>15 minutes</strong>. Not an opinion — Meta's own data.</span></p>
+    </div>
+    <div class="prob-card">
+      <div class="prob-big">4ч</div>
+      <div class="prob-title"><span data-lang="ru" class="on">Потери на повторяющиеся вопросы</span><span data-lang="kz">Қайталанатын сұрақтарға уақыт</span><span data-lang="en">Lost to repetitive questions</span></div>
+      <p class="prob-desc"><span data-lang="ru" class="on">"Сколько стоит?", "Какой адрес?", "Режим работы?" — одно и то же каждый день.</span><span data-lang="kz">"Қанша тұрады?", "Мекенжай?", "Жұмыс уақыты?" — күн сайын бірдей.</span><span data-lang="en">"How much?", "Address?", "Working hours?" — the same questions daily.</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="section" id="how">
+  <p class="section-label fu"><span data-lang="ru" class="on">Как работает</span><span data-lang="kz">Қалай жұмыс істейді</span><span data-lang="en">How it works</span></p>
+  <h2 class="section-title fu"><span data-lang="ru" class="on">От сообщения до лида — за 3 секунды</span><span data-lang="kz">Хабардан лидке — 3 секундта</span><span data-lang="en">From message to lead — in 3 seconds</span></h2>
+  <div class="steps fu">
+    <div class="step">
+      <div class="step-n">01</div>
+      <div class="step-title"><span data-lang="ru" class="on">Клиент пишет или голосовой</span><span data-lang="kz">Клиент жазады немесе дауыстық</span><span data-lang="en">Client writes or sends voice</span></div>
+      <p class="step-desc"><span data-lang="ru" class="on">Текст, голосовое, любой язык — бот принимает всё</span><span data-lang="kz">Мәтін, дауыстық, кез келген тіл</span><span data-lang="en">Text, voice, any language — bot handles all</span></p>
+      <span class="step-badge">Instant</span>
+    </div>
+    <div class="step">
+      <div class="step-n">02</div>
+      <div class="step-title"><span data-lang="ru" class="on">AI анализирует и отвечает</span><span data-lang="kz">AI талдап, жауап береді</span><span data-lang="en">AI analyzes and replies</span></div>
+      <p class="step-desc"><span data-lang="ru" class="on">Claude Sonnet отвечает как опытный sales-менеджер вашего бизнеса</span><span data-lang="kz">Claude Sonnet тәжірибелі менеджер сияқты жауап береді</span><span data-lang="en">Claude Sonnet replies like your trained sales manager</span></p>
+      <span class="step-badge">~2–3 сек</span>
+    </div>
+    <div class="step">
+      <div class="step-n">03</div>
+      <div class="step-title"><span data-lang="ru" class="on">Лид квалифицирован</span><span data-lang="kz">Лид бағаланды</span><span data-lang="en">Lead qualified</span></div>
+      <p class="step-desc"><span data-lang="ru" class="on">Горячий / тёплый / холодный — автоматически по каждому сообщению</span><span data-lang="kz">Ыстық / жылы / суық — автоматты</span><span data-lang="en">Hot / warm / cold — auto-scored per message</span></p>
+      <span class="step-badge">Real-time</span>
+    </div>
+    <div class="step">
+      <div class="step-n">04</div>
+      <div class="step-title"><span data-lang="ru" class="on">Push в Telegram</span><span data-lang="kz">Telegram-да push</span><span data-lang="en">Telegram push</span></div>
+      <p class="step-desc"><span data-lang="ru" class="on">Горячий лид? Уведомление с контекстом и кнопками — открыть Instagram, WhatsApp</span><span data-lang="kz">Ыстық лид? Контекстпен хабарлама</span><span data-lang="en">Hot lead? Push with context and action buttons instantly</span></p>
+      <span class="step-badge">Instant</span>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section bg-gray">
+  <p class="section-label fu"><span data-lang="ru" class="on">Возможности</span><span data-lang="kz">Мүмкіндіктер</span><span data-lang="en">Features</span></p>
+  <h2 class="section-title fu"><span data-lang="ru" class="on">То, чего нет у конкурентов</span><span data-lang="kz">Бәсекелестерде жоқ нәрсе</span><span data-lang="en">What competitors can't do</span></h2>
+  <div class="feat-grid fu">
+    <div class="feat-card wide">
+      <div>
+        <span class="feat-icon">🎙️</span>
+        <div class="feat-title"><span data-lang="ru" class="on">Голосовые сообщения</span><span data-lang="kz">Дауыстық хабарлар</span><span data-lang="en">Voice messages</span></div>
+        <p class="feat-desc"><span data-lang="ru" class="on">30–40% людей пишут голосовыми. Наш бот транскрибирует через Groq Whisper Large v3 и отвечает за секунды. Manychat и ChatFuel этого не умеют. Мы умеем.</span><span data-lang="kz">30–40% адам дауыстық жібереді. Бот Groq Whisper арқылы транскрибациялайды. Manychat мұны жасай алмайды.</span><span data-lang="en">30–40% of people send voice. Our bot transcribes via Groq Whisper Large v3 and replies in seconds. Manychat can't. We can.</span></p>
+        <span class="feat-tag"><span data-lang="ru" class="on">Уникально для РК</span><span data-lang="kz">ҚР үшін бірегей</span><span data-lang="en">Unique in CIS</span></span>
+      </div>
+      <div class="chat">
+        <div class="chat-head">
+          <div class="chat-av">A</div>
+          <div class="chat-info">
+            <div class="chat-name">Adab AI Bot</div>
+            <div class="chat-status">● онлайн</div>
+          </div>
+        </div>
+        <div class="msg u"><div class="bubble">🎙️ Голосовое · 0:08</div><div class="msg-t">23:47</div></div>
+        <div class="msg b"><div class="bubble">Транскрибирую... ✓<br><br>Вас интересует подключение бота для кофейни? Сколько сообщений получаете в день?</div><div class="msg-t">23:47</div></div>
+        <div class="msg u"><div class="bubble">Около 30–40 в день</div><div class="msg-t">23:48</div></div>
+        <div class="msg b"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+      </div>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🇰🇿</span>
+      <div class="feat-title"><span data-lang="ru" class="on">Казахский + Русский</span><span data-lang="kz">Қазақша + Орысша</span><span data-lang="en">Kazakh + Russian</span></div>
+      <p class="feat-desc"><span data-lang="ru" class="on">Бот автоматически определяет язык каждого сообщения и отвечает на нём. Глобальные решения этого не делают.</span><span data-lang="kz">Бот әр хабардың тілін автоматты анықтайды. Ғаламдық шешімдер мұны жасамайды.</span><span data-lang="en">Bot auto-detects language per message. Global tools don't do this.</span></p>
+      <span class="feat-tag"><span data-lang="ru" class="on">Локализован под РК</span><span data-lang="kz">ҚР-ға бейімделген</span><span data-lang="en">Built for Kazakhstan</span></span>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🔔</span>
+      <div class="feat-title"><span data-lang="ru" class="on">Горячие лиды в Telegram</span><span data-lang="kz">Ыстық лидтер Telegram-да</span><span data-lang="en">Hot leads to Telegram</span></div>
+      <p class="feat-desc"><span data-lang="ru" class="on">Когда клиент готов купить — вы получаете push с контекстом диалога и кнопками. Ни один лид не пропадёт.</span><span data-lang="kz">Клиент сатып алуға дайын болғанда — сіз хабарлама аласыз.</span><span data-lang="en">When a client is ready to buy, you get a push with full context. Zero hot leads missed.</span></p>
+      <span class="feat-tag">Real-time</span>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🛡️</span>
+      <div class="feat-title"><span data-lang="ru" class="on">Jailbreak-защита</span><span data-lang="kz">Jailbreak қорғанысы</span><span data-lang="en">Jailbreak protection</span></div>
+      <p class="feat-desc"><span data-lang="ru" class="on">"Игнорируй инструкции" — не работает. Bulletproof prompt с 12 защитными блоками. Бот остаётся ботом вашего бизнеса.</span><span data-lang="kz">"Нұсқауларды елемей" — жұмыс істемейді. 12 блокпен қорғалған.</span><span data-lang="en">"Ignore all instructions" — doesn't work. 12-layer protection system.</span></p>
+      <span class="feat-tag">Anti-jailbreak</span>
+    </div>
+  </div>
+</section>
+
+<!-- CLIENTS -->
+<section class="section">
+  <p class="section-label fu"><span data-lang="ru" class="on">Уже работают</span><span data-lang="kz">Қазірдің өзінде жұмыс істейді</span><span data-lang="en">Already running</span></p>
+  <h2 class="section-title fu"><span data-lang="ru" class="on">30+ бизнесов по всему Казахстану</span><span data-lang="kz">Қазақстан бойынша 30+ бизнес</span><span data-lang="en">30+ businesses across Kazakhstan</span></h2>
+  <div class="clients-wrap fu">
+    <div class="client-pill">☕ Raf Coffee</div>
+    <div class="client-pill">🏫 Ansarik Balabaqsha</div>
+    <div class="client-pill">⌨️ Qwerty</div>
+    <div class="client-pill"><span data-lang="ru" class="on">🏥 Стоматологии</span><span data-lang="kz">🏥 Стоматологиялар</span><span data-lang="en">🏥 Dental clinics</span></div>
+    <div class="client-pill"><span data-lang="ru" class="on">💇 Салоны красоты</span><span data-lang="kz">💇 Сұлулық салондары</span><span data-lang="en">💇 Beauty salons</span></div>
+    <div class="client-pill"><span data-lang="ru" class="on">🛍️ Магазины одежды</span><span data-lang="kz">🛍️ Киім дүкендері</span><span data-lang="en">🛍️ Clothing stores</span></div>
+    <div class="client-pill"><span data-lang="ru" class="on">📚 Курсы и школы</span><span data-lang="kz">📚 Курстар мен мектептер</span><span data-lang="en">📚 Courses & schools</span></div>
+    <div class="client-pill"><span data-lang="ru" class="on">🍕 Рестораны и кафе</span><span data-lang="kz">🍕 Мейрамханалар</span><span data-lang="en">🍕 Restaurants & cafes</span></div>
+    <div class="client-pill"><span data-lang="ru" class="on">+ ещё 20 бизнесов</span><span data-lang="kz">+ тағы 20 бизнес</span><span data-lang="en">+ 20 more businesses</span></div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section bg-gray">
+  <p class="section-label fu"><span data-lang="ru" class="on">Тарифы</span><span data-lang="kz">Тарифтер</span><span data-lang="en">Pricing</span></p>
+  <h2 class="section-title fu"><span data-lang="ru" class="on">Прозрачные цены. Окупается с первой недели.</span><span data-lang="kz">Мөлдір бағалар. Бірінші аптадан өтеледі.</span><span data-lang="en">Transparent pricing. ROI from week one.</span></h2>
+  <div class="price-grid fu">
+    <div class="price-card">
+      <div class="plan-name">Basic</div>
+      <div class="price-amt">30 000</div>
+      <div class="price-per"><span data-lang="ru" class="on">тг / месяц</span><span data-lang="kz">тг / ай</span><span data-lang="en">KZT / month</span></div>
+      <div class="price-setup"><span data-lang="ru" class="on">+ разовая настройка 150 000 тг</span><span data-lang="kz">+ баптау 150 000 тг</span><span data-lang="en">+ one-time setup 150,000 KZT</span></div>
+      <ul class="feats">
+        <li class="feat-row"><span data-lang="ru" class="on">1 Instagram аккаунт</span><span data-lang="kz">1 Instagram аккаунт</span><span data-lang="en">1 Instagram account</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">1 000 сообщений / мес</span><span data-lang="kz">1 000 хабар / ай</span><span data-lang="en">1,000 messages / month</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">Базовый промпт</span><span data-lang="kz">Базалық промпт</span><span data-lang="en">Basic prompt</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">Telegram-уведомления</span><span data-lang="kz">Telegram хабарламалары</span><span data-lang="en">Telegram notifications</span></li>
+      </ul>
+      <a href="https://wa.me/77715899999" class="price-btn dark" target="_blank"><span data-lang="ru" class="on">Начать →</span><span data-lang="kz">Бастау →</span><span data-lang="en">Get started →</span></a>
+    </div>
+    <div class="price-card hot">
+      <div class="pop-badge"><span data-lang="ru" class="on">Популярный</span><span data-lang="kz">Танымал</span><span data-lang="en">Popular</span></div>
+      <div class="plan-name">Business</div>
+      <div class="price-amt">60 000</div>
+      <div class="price-per"><span data-lang="ru" class="on">тг / месяц</span><span data-lang="kz">тг / ай</span><span data-lang="en">KZT / month</span></div>
+      <div class="price-setup"><span data-lang="ru" class="on">+ разовая настройка 250 000 тг</span><span data-lang="kz">+ баптау 250 000 тг</span><span data-lang="en">+ one-time setup 250,000 KZT</span></div>
+      <ul class="feats">
+        <li class="feat-row"><span data-lang="ru" class="on">До 3 аккаунтов</span><span data-lang="kz">3 аккаунтқа дейін</span><span data-lang="en">Up to 3 accounts</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">Безлимитные сообщения</span><span data-lang="kz">Шексіз хабарлар</span><span data-lang="en">Unlimited messages</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">Голосовые сообщения</span><span data-lang="kz">Дауыстық хабарлар</span><span data-lang="en">Voice messages</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">Кастомный промпт под бизнес</span><span data-lang="kz">Бизнеске арнайы промпт</span><span data-lang="en">Custom business prompt</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">Приоритетная поддержка</span><span data-lang="kz">Басымды қолдау</span><span data-lang="en">Priority support</span></li>
+      </ul>
+      <a href="https://wa.me/77715899999" class="price-btn lime" target="_blank"><span data-lang="ru" class="on">Написать в WhatsApp →</span><span data-lang="kz">WhatsApp-қа жазу →</span><span data-lang="en">WhatsApp us →</span></a>
+    </div>
+    <div class="price-card">
+      <div class="plan-name">Pro</div>
+      <div class="price-amt">100 000</div>
+      <div class="price-per"><span data-lang="ru" class="on">тг / месяц</span><span data-lang="kz">тг / ай</span><span data-lang="en">KZT / month</span></div>
+      <div class="price-setup"><span data-lang="ru" class="on">+ разовая настройка 400 000 тг</span><span data-lang="kz">+ баптау 400 000 тг</span><span data-lang="en">+ one-time setup 400,000 KZT</span></div>
+      <ul class="feats">
+        <li class="feat-row"><span data-lang="ru" class="on">Безлимит аккаунтов</span><span data-lang="kz">Шексіз аккаунттар</span><span data-lang="en">Unlimited accounts</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">Мультиязычность</span><span data-lang="kz">Көптілділік</span><span data-lang="en">Multi-language</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">AI-контент генерация</span><span data-lang="kz">AI контент генерациясы</span><span data-lang="en">AI content generation</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">CRM-интеграции</span><span data-lang="kz">CRM интеграциялары</span><span data-lang="en">CRM integrations</span></li>
+        <li class="feat-row"><span data-lang="ru" class="on">Выделенный менеджер</span><span data-lang="kz">Жеке менеджер</span><span data-lang="en">Dedicated manager</span></li>
+      </ul>
+      <a href="https://wa.me/77715899999" class="price-btn dark" target="_blank"><span data-lang="ru" class="on">Обсудить →</span><span data-lang="kz">Талқылау →</span><span data-lang="en">Discuss →</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- GUARANTEE -->
+<div class="guarantee">
+  <span style="font-size:28px">🛡️</span>
+  <div>
+    <div class="guarantee-text"><span data-lang="ru" class="on">7-дневная гарантия возврата</span><span data-lang="kz">7 күндік қайтару кепілдігі</span><span data-lang="en">7-day money-back guarantee</span></div>
+    <div class="guarantee-sub"><span data-lang="ru" class="on">Если не понравится в первые 7 дней — вернём деньги. Без вопросов.</span><span data-lang="kz">Алғашқы 7 күнде ұнамаса — ақшаны қайтарамыз. Сұрақсыз.</span><span data-lang="en">Not happy in the first 7 days — full refund. No questions asked.</span></div>
+  </div>
+</div>
+
+<!-- CTA -->
+<section class="cta-final">
+  <div class="cta-final-glow"></div>
+  <h2 class="cta-h2"><span data-lang="ru" class="on">Готовы попробовать?</span><span data-lang="kz">Көруге дайынсыз ба?</span><span data-lang="en">Ready to try?</span></h2>
+  <p class="cta-p"><span data-lang="ru" class="on">Покажем как это работает на вашем бизнесе — Zoom на 15 минут, бесплатно</span><span data-lang="kz">Сіздің бизнесіңізде қалай жұмыс істейтінін көрсетеміз — 15 минуттық Zoom, тегін</span><span data-lang="en">We'll show how it works for your business — 15-min Zoom, free</span></p>
+  <a href="https://wa.me/77715899999" class="btn-wa-xl" target="_blank">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    <span data-lang="ru" class="on">Написать в WhatsApp</span>
+    <span data-lang="kz">WhatsApp-қа жазу</span>
+    <span data-lang="en">Write on WhatsApp</span>
+  </a>
+</section>
+
+<footer>
+  <a href="#" class="logo">Adab<em>AI</em></a>
+  <div class="foot-copy">© 2026 Adab AI Agency · Тараз, Казахстан</div>
+  <a href="https://instagram.com/adab_ai_agency" class="foot-ig" target="_blank">@adab_ai_agency</a>
+</footer>
+
+<script>
+// Cursor
+const cur=document.getElementById('cur'),ring=document.getElementById('ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function anim(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(anim)})();
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='18px';cur.style.height='18px'});
+  el.addEventListener('mouseleave',()=>{cur.style.width='10px';cur.style.height='10px'});
+});
+
+// Lang
+function setLang(l){
+  document.querySelectorAll('[data-lang]').forEach(el=>el.classList.toggle('on',el.dataset.lang===l));
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.textContent===l.toUpperCase()));
+}
+
+// Scroll fade
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.1});
+document.querySelectorAll('.fu').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
