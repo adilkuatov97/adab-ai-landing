@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Подключить бота — Adab AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--black:#0a0a0a;--white:#f5f2eb;--accent:#c8ff00;--gray:#111;--gray2:#1a1a1a;--muted:#5a5a5a;--border:rgba(255,255,255,.08);--wa:#25D366;--error:#ff4d4d;--success:#c8ff00}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--white);font-family:'Golos Text',sans-serif;font-size:16px;line-height:1.6;min-height:100vh}
+
+/* NAV */
+nav{display:flex;justify-content:space-between;align-items:center;padding:20px 48px;border-bottom:1px solid var(--border)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-1px;color:var(--white);text-decoration:none}.logo em{font-style:normal;color:var(--accent)}
+.back{font-size:14px;color:var(--muted);text-decoration:none;transition:color .2s}.back:hover{color:var(--white)}
+
+/* LAYOUT */
+.wrap{max-width:640px;margin:0 auto;padding:64px 24px 120px}
+
+/* HEADER */
+.page-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(200,255,0,.08);border:1px solid rgba(200,255,0,.2);color:var(--accent);font-size:12px;font-weight:600;padding:6px 14px;border-radius:100px;margin-bottom:24px;letter-spacing:.08em;text-transform:uppercase}
+.page-h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(32px,5vw,48px);letter-spacing:-2px;line-height:1;margin-bottom:12px}
+.page-sub{font-size:16px;color:var(--muted);margin-bottom:48px;line-height:1.6}
+
+/* STEPS INDICATOR */
+.steps-bar{display:flex;align-items:center;gap:0;margin-bottom:48px}
+.step-dot{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted);transition:color .3s}
+.step-dot.active{color:var(--white)}
+.step-dot.done{color:var(--accent)}
+.dot{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;transition:all .3s;flex-shrink:0}
+.step-dot.active .dot{border-color:var(--white);background:var(--white);color:var(--black)}
+.step-dot.done .dot{border-color:var(--accent);background:var(--accent);color:var(--black)}
+.step-line{flex:1;height:1px;background:var(--border);margin:0 12px;transition:background .3s}
+.step-line.done{background:var(--accent)}
+
+/* FORM SECTIONS */
+.form-section{display:none}.form-section.active{display:block}
+
+.section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:22px;letter-spacing:-.5px;margin-bottom:8px}
+.section-sub{font-size:14px;color:var(--muted);margin-bottom:32px;line-height:1.6}
+
+/* FIELDS */
+.field{margin-bottom:20px}
+.field label{display:block;font-size:13px;font-weight:600;color:rgba(245,242,235,.7);margin-bottom:8px;letter-spacing:.02em}
+.field label em{font-style:normal;color:var(--accent)}
+.field input,.field select,.field textarea{width:100%;background:var(--gray2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-family:'Golos Text',sans-serif;font-size:15px;color:var(--white);outline:none;transition:border-color .2s;-webkit-appearance:none}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(200,255,0,.4)}
+.field input.err,.field select.err,.field textarea.err{border-color:var(--error)}
+.field textarea{resize:vertical;min-height:100px}
+.field select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5a5a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center}
+.field select option{background:var(--gray2)}
+.err-msg{font-size:12px;color:var(--error);margin-top:6px;display:none}
+.field.has-err .err-msg{display:block}
+
+.field-hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}
+.field-hint a{color:var(--accent);text-decoration:none}.field-hint a:hover{text-decoration:underline}
+
+/* TOKEN INSTRUCTION */
+.token-steps{background:var(--gray2);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
+.token-steps-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.token-step-row{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.token-step-row:last-child{margin-bottom:0}
+.token-n{width:24px;height:24px;border-radius:50%;background:rgba(200,255,0,.1);border:1px solid rgba(200,255,0,.2);color:var(--accent);font-size:11px;font-weight:700;font-family:'Syne',sans-serif;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.token-text{font-size:14px;color:rgba(245,242,235,.7);line-height:1.6}
+.token-text strong{color:var(--white)}
+.token-text a{color:var(--accent);text-decoration:none}.token-text a:hover{text-decoration:underline}
+.token-text code{background:rgba(255,255,255,.07);padding:2px 7px;border-radius:5px;font-size:13px;font-family:monospace}
+
+/* PLAN CARDS */
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px}
+.plan-card{border:1.5px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative}
+.plan-card:hover{border-color:rgba(200,255,0,.3)}
+.plan-card.selected{border-color:var(--accent);background:rgba(200,255,0,.05)}
+.plan-card input[type=radio]{position:absolute;opacity:0;width:0;height:0}
+.plan-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px}
+.plan-price{font-size:13px;color:var(--muted)}
+.plan-card.selected .plan-price{color:var(--accent)}
+.plan-check{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--muted);position:absolute;top:12px;right:12px;transition:all .2s}
+.plan-card.selected .plan-check{border-color:var(--accent);background:var(--accent)}
+
+/* NICHE GRID */
+.niche-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.niche-btn{border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;font-size:13px;font-weight:500;color:rgba(245,242,235,.6);background:none;transition:all .2s;text-align:left;font-family:'Golos Text',sans-serif}
+.niche-btn:hover{border-color:rgba(200,255,0,.3);color:var(--white)}
+.niche-btn.selected{border-color:var(--accent);color:var(--white);background:rgba(200,255,0,.05)}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:12px;margin-top:40px;justify-content:space-between;align-items:center}
+.btn-next{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;padding:15px 32px;border-radius:100px;border:none;cursor:pointer;transition:all .2s}
+.btn-next:hover{background:#d4ff1a;transform:translateY(-1px)}
+.btn-next:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-back{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);color:var(--muted);font-family:'Golos Text',sans-serif;font-size:14px;padding:15px 24px;border-radius:100px;cursor:pointer;transition:all .2s}
+.btn-back:hover{border-color:rgba(255,255,255,.2);color:var(--white)}
+
+/* SUCCESS */
+.success-screen{display:none;text-align:center;padding:48px 0}
+.success-icon{font-size:64px;margin-bottom:24px}
+.success-h{font-family:'Syne',sans-serif;font-weight:800;font-size:36px;letter-spacing:-1px;margin-bottom:12px}
+.success-p{font-size:16px;color:var(--muted);line-height:1.7;max-width:400px;margin:0 auto 40px}
+.success-box{background:var(--gray2);border:1px solid var(--border);border-radius:16px;padding:24px;text-align:left;margin-bottom:32px}
+.success-box-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:16px;color:var(--accent)}
+.cmd{background:var(--black);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:12px;color:var(--accent);word-break:break-all;line-height:1.6;margin-bottom:8px;cursor:pointer;transition:background .2s;position:relative}
+.cmd:hover{background:#0f0f0f}
+.cmd::after{content:'копировать';position:absolute;top:8px;right:12px;font-size:10px;color:var(--muted);font-family:'Golos Text',sans-serif}
+.cmd.copied::after{content:'скопировано ✓';color:var(--accent)}
+.btn-wa-big{display:inline-flex;align-items:center;gap:10px;background:var(--wa);color:#fff;text-decoration:none;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;padding:16px 36px;border-radius:100px;transition:all .2s}
+.btn-wa-big:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(37,211,102,.3)}
+.btn-wa-big svg{width:20px;height:20px}
+
+/* LOADING */
+.loading{display:none;text-align:center;padding:48px 0}
+.spinner{width:40px;height:40px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:600px){
+  nav{padding:16px 20px}
+  .wrap{padding:40px 20px 80px}
+  .plan-grid,.niche-grid{grid-template-columns:1fr 1fr}
+  .btn-row{flex-direction:column-reverse;align-items:stretch}
+  .btn-next,.btn-back{justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Adab<em>AI</em></a>
+  <a href="/" class="back">← На главную</a>
+</nav>
+
+<div class="wrap">
+  <div class="page-tag">Подключение</div>
+  <h1 class="page-h1">Запустим бота<br>за 5 минут</h1>
+  <p class="page-sub">Заполните форму — мы получим данные и свяжемся для финального шага</p>
+
+  <!-- STEPS -->
+  <div class="steps-bar">
+    <div class="step-dot active" id="sdot1">
+      <div class="dot">1</div>
+      <span>Бизнес</span>
+    </div>
+    <div class="step-line" id="sline1"></div>
+    <div class="step-dot" id="sdot2">
+      <div class="dot">2</div>
+      <span>Тариф</span>
+    </div>
+    <div class="step-line" id="sline2"></div>
+    <div class="step-dot" id="sdot3">
+      <div class="dot">3</div>
+      <span>Instagram</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: BUSINESS -->
+  <div class="form-section active" id="step1">
+    <div class="section-title">Расскажите о бизнесе</div>
+    <p class="section-sub">Эти данные нужны чтобы настроить бота под вашу нишу</p>
+
+    <div class="field" id="f-name">
+      <label>Название бизнеса <em>*</em></label>
+      <input type="text" id="biz-name" placeholder="Например: Ansarik Balabaqsha">
+      <div class="err-msg">Заполните это поле</div>
+    </div>
+
+    <div class="field" id="f-niche">
+      <label>Сфера деятельности <em>*</em></label>
+      <div class="niche-grid">
+        <button class="niche-btn" onclick="selectNiche(this,'☕ Кофейня/Кафе')">☕ Кофейня/Кафе</button>
+        <button class="niche-btn" onclick="selectNiche(this,'🏥 Клиника/Стоматология')">🏥 Клиника</button>
+        <button class="niche-btn" onclick="selectNiche(this,'💇 Бьюти/Салон')">💇 Бьюти/Салон</button>
+        <button class="niche-btn" onclick="selectNiche(this,'🏫 Детсад/Школа')">🏫 Детсад/Школа</button>
+        <button class="niche-btn" onclick="selectNiche(this,'📚 Курсы/Обучение')">📚 Курсы</button>
+        <button class="niche-btn" onclick="selectNiche(this,'🛍️ Магазин/E-commerce')">🛍️ Магазин</button>
+        <button class="niche-btn" onclick="selectNiche(this,'🏋️ Фитнес/Спорт')">🏋️ Фитнес</button>
+        <button class="niche-btn" onclick="selectNiche(this,'🍕 Ресторан/Доставка')">🍕 Ресторан</button>
+        <button class="niche-btn" onclick="selectNiche(this,'Другое')">✏️ Другое</button>
+      </div>
+      <input type="hidden" id="biz-niche">
+      <div class="err-msg" id="niche-err" style="display:none">Выберите сферу</div>
+    </div>
+
+    <div class="field" id="f-city">
+      <label>Город <em>*</em></label>
+      <input type="text" id="biz-city" placeholder="Тараз / Алматы / Астана...">
+      <div class="err-msg">Заполните это поле</div>
+    </div>
+
+    <div class="field" id="f-wa">
+      <label>WhatsApp номер <em>*</em></label>
+      <input type="tel" id="biz-wa" placeholder="+7 777 123 4567">
+      <div class="field-hint">На этот номер будут переводить клиентов из Instagram</div>
+      <div class="err-msg">Заполните это поле</div>
+    </div>
+
+    <div class="field" id="f-tg">
+      <label>Ваш Telegram username или номер <em>*</em></label>
+      <input type="text" id="biz-tg" placeholder="@username или +7 777 123 4567">
+      <div class="field-hint">Чтобы мы могли связаться и настроить уведомления о горячих лидах</div>
+      <div class="err-msg">Заполните это поле</div>
+    </div>
+
+    <div class="btn-row">
+      <div></div>
+      <button class="btn-next" onclick="goStep(2)">Далее → Тариф</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: PLAN -->
+  <div class="form-section" id="step2">
+    <div class="section-title">Выберите тариф</div>
+    <p class="section-sub">Можно изменить позже — мы всё обсудим перед запуском</p>
+
+    <div class="field">
+      <div class="plan-grid">
+        <label class="plan-card" onclick="selectPlan(this,'Basic')">
+          <input type="radio" name="plan" value="Basic">
+          <div class="plan-check"></div>
+          <div class="plan-name">Basic</div>
+          <div class="plan-price">30 000 тг/мес</div>
+        </label>
+        <label class="plan-card selected" onclick="selectPlan(this,'Business')">
+          <input type="radio" name="plan" value="Business" checked>
+          <div class="plan-check"></div>
+          <div class="plan-name">Business ⭐</div>
+          <div class="plan-price">60 000 тг/мес</div>
+        </label>
+        <label class="plan-card" onclick="selectPlan(this,'Pro')">
+          <input type="radio" name="plan" value="Pro">
+          <div class="plan-check"></div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">100 000 тг/мес</div>
+        </label>
+      </div>
+      <div class="field-hint">Setup fee оплачивается отдельно после финального согласования. <a href="/#pricing" target="_blank">Подробнее о тарифах →</a></div>
+    </div>
+
+    <div class="field" id="f-msgs">
+      <label>Сколько сообщений в день получаете в Direct?</label>
+      <select id="biz-msgs">
+        <option value="">Выберите...</option>
+        <option value="1-10">1–10 сообщений</option>
+        <option value="10-30">10–30 сообщений</option>
+        <option value="30-100">30–100 сообщений</option>
+        <option value="100+">Более 100</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Комментарий (необязательно)</label>
+      <textarea id="biz-comment" placeholder="Расскажите что важно для вашего бизнеса, какие вопросы чаще всего задают клиенты..."></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-back" onclick="goStep(1)">← Назад</button>
+      <button class="btn-next" onclick="goStep(3)">Далее → Instagram</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: INSTAGRAM TOKEN -->
+  <div class="form-section" id="step3">
+    <div class="section-title">Доступ к Instagram</div>
+    <p class="section-sub">Нужен Access Token чтобы бот мог получать и отправлять сообщения от имени вашего аккаунта</p>
+
+    <div class="token-steps">
+      <div class="token-steps-title">📋 Как получить токен — 5 шагов</div>
+      <div class="token-step-row">
+        <div class="token-n">1</div>
+        <div class="token-text">Зайдите на <a href="https://developers.facebook.com" target="_blank">developers.facebook.com</a> и войдите через Facebook аккаунт который привязан к вашему Instagram бизнес-аккаунту</div>
+      </div>
+      <div class="token-step-row">
+        <div class="token-n">2</div>
+        <div class="token-text">Найдите приложение <strong>Adab AI</strong> в списке ваших приложений (мы добавим вас заранее) или создайте тестовое</div>
+      </div>
+      <div class="token-step-row">
+        <div class="token-n">3</div>
+        <div class="token-text">Перейдите в <strong>Instagram → API setup with Instagram login</strong></div>
+      </div>
+      <div class="token-step-row">
+        <div class="token-n">4</div>
+        <div class="token-text">Нажмите <strong>Generate Token</strong> рядом с вашим Instagram аккаунтом</div>
+      </div>
+      <div class="token-step-row">
+        <div class="token-n">5</div>
+        <div class="token-text">Скопируйте токен — он начинается с <code>IGAA...</code> или <code>EAA...</code> — и вставьте ниже</div>
+      </div>
+    </div>
+
+    <div class="field" id="f-ig">
+      <label>Instagram @username <em>*</em></label>
+      <input type="text" id="biz-ig" placeholder="@yourhandle (без @)">
+      <div class="err-msg">Заполните это поле</div>
+    </div>
+
+    <div class="field" id="f-token">
+      <label>Instagram Access Token <em>*</em></label>
+      <textarea id="biz-token" placeholder="IGAA... или EAA..." style="min-height:80px;font-family:monospace;font-size:13px"></textarea>
+      <div class="field-hint">⚠️ Токен передаётся по HTTPS и хранится в зашифрованном виде. Никто кроме системы его не видит.</div>
+      <div class="err-msg">Вставьте токен</div>
+    </div>
+
+    <div class="field" id="f-skip" style="margin-top:-8px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:400;color:var(--muted)">
+        <input type="checkbox" id="skip-token" onchange="toggleToken(this)" style="width:auto;border-radius:4px;accent-color:var(--accent)">
+        Не знаю как получить токен — получим вместе на Zoom
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-back" onclick="goStep(2)">← Назад</button>
+      <button class="btn-next" id="submit-btn" onclick="submitForm()">Отправить заявку 🚀</button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p style="color:var(--muted);font-size:14px">Отправляем заявку...</p>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="success">
+    <div class="success-icon">🎉</div>
+    <h2 class="success-h">Заявка принята!</h2>
+    <p class="success-p">Мы получили все данные и свяжемся с вами в течение 2 часов для финального шага</p>
+
+    <div class="success-box" id="admin-box">
+      <div class="success-box-title">⚡ Для Adilkhan — команды для подключения</div>
+      <div id="cmd1" class="cmd" onclick="copyCmd('cmd1')"></div>
+      <div id="cmd2" class="cmd" onclick="copyCmd('cmd2')"></div>
+    </div>
+
+    <a href="https://wa.me/77715899999" class="btn-wa-big" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Написать нам в WhatsApp
+    </a>
+  </div>
+</div>
+
+<script>
+const BOT_TOKEN = 'TELEGRAM_BOT_TOKEN_HERE';
+const CHAT_ID = '1387831192';
+
+let selectedPlan = 'Business';
+let selectedNiche = '';
+
+function selectNiche(btn, val) {
+  document.querySelectorAll('.niche-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedNiche = val;
+  document.getElementById('biz-niche').value = val;
+  document.getElementById('niche-err').style.display = 'none';
+}
+
+function selectPlan(card, val) {
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedPlan = val;
+}
+
+function toggleToken(cb) {
+  const tokenField = document.getElementById('f-token');
+  const tokenInput = document.getElementById('biz-token');
+  if (cb.checked) {
+    tokenField.style.opacity = '0.4';
+    tokenField.style.pointerEvents = 'none';
+    tokenInput.required = false;
+    tokenInput.value = 'ZOOM_REQUIRED';
+  } else {
+    tokenField.style.opacity = '1';
+    tokenField.style.pointerEvents = 'auto';
+    tokenInput.required = true;
+    tokenInput.value = '';
+  }
+}
+
+function validate1() {
+  let ok = true;
+  const fields = [
+    {id:'biz-name', fid:'f-name'},
+    {id:'biz-city', fid:'f-city'},
+    {id:'biz-wa', fid:'f-wa'},
+    {id:'biz-tg', fid:'f-tg'},
+  ];
+  fields.forEach(({id, fid}) => {
+    const el = document.getElementById(id);
+    const fe = document.getElementById(fid);
+    if (!el.value.trim()) { fe.classList.add('has-err'); el.classList.add('err'); ok = false; }
+    else { fe.classList.remove('has-err'); el.classList.remove('err'); }
+  });
+  if (!selectedNiche) {
+    document.getElementById('niche-err').style.display = 'block';
+    ok = false;
+  }
+  return ok;
+}
+
+function validate3() {
+  let ok = true;
+  const skipToken = document.getElementById('skip-token').checked;
+  const ig = document.getElementById('biz-ig');
+  const token = document.getElementById('biz-token');
+  if (!ig.value.trim()) {
+    document.getElementById('f-ig').classList.add('has-err');
+    ig.classList.add('err'); ok = false;
+  } else {
+    document.getElementById('f-ig').classList.remove('has-err');
+    ig.classList.remove('err');
+  }
+  if (!skipToken && !token.value.trim()) {
+    document.getElementById('f-token').classList.add('has-err');
+    token.classList.add('err'); ok = false;
+  } else {
+    document.getElementById('f-token').classList.remove('has-err');
+    token.classList.remove('err');
+  }
+  return ok;
+}
+
+function goStep(n) {
+  if (n === 2 && !validate1()) return;
+  if (n > 3) return;
+
+  [1,2,3].forEach(i => {
+    document.getElementById('step'+i).classList.toggle('active', i===n);
+    const dot = document.getElementById('sdot'+i);
+    dot.classList.remove('active','done');
+    if (i === n) dot.classList.add('active');
+    else if (i < n) dot.classList.add('done');
+  });
+  [1,2].forEach(i => {
+    document.getElementById('sline'+i)?.classList.toggle('done', i < n);
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function submitForm() {
+  if (!validate3()) return;
+
+  const data = {
+    name: document.getElementById('biz-name').value.trim(),
+    niche: selectedNiche,
+    city: document.getElementById('biz-city').value.trim(),
+    wa: document.getElementById('biz-wa').value.trim(),
+    tg: document.getElementById('biz-tg').value.trim(),
+    plan: selectedPlan,
+    msgs: document.getElementById('biz-msgs').value,
+    comment: document.getElementById('biz-comment').value.trim(),
+    ig: document.getElementById('biz-ig').value.trim().replace('@',''),
+    token: document.getElementById('biz-token').value.trim(),
+    skipToken: document.getElementById('skip-token').checked,
+  };
+
+  document.getElementById('step3').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+
+  const tokenDisplay = data.skipToken ? '⚠️ Нужен Zoom для токена' : `\`${data.token.substring(0,20)}...\``;
+
+  const msg = `🆕 *НОВАЯ ЗАЯВКА — Adab AI*
+
+🏢 *Бизнес:* ${data.name}
+🏷️ *Сфера:* ${data.niche}
+📍 *Город:* ${data.city}
+📱 *Тариф:* ${data.plan}
+💬 *Сообщений/день:* ${data.msgs || 'не указано'}
+
+📞 *WhatsApp:* ${data.wa}
+✈️ *Telegram:* ${data.tg}
+📸 *Instagram:* @${data.ig}
+🔑 *Token:* ${tokenDisplay}
+
+${data.comment ? `💬 *Комментарий:* ${data.comment}` : ''}
+
+⏱️ ${new Date().toLocaleString('ru-RU', {timeZone:'Asia/Almaty'})}`;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({chat_id: CHAT_ID, text: msg, parse_mode: 'Markdown'})
+    });
+  } catch(e) {
+    console.log('Telegram notify failed:', e);
+  }
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('success').style.display = 'block';
+  document.querySelector('.steps-bar').style.display = 'none';
+
+  // Show admin commands
+  const waLink = `https://wa.me/${data.wa.replace(/\D/g,'')}`;
+  document.getElementById('cmd1').textContent =
+    `curl -X POST https://adab-ai-instagram-bot.onrender.com/admin/clients -H "X-Admin-Key: $ADMIN_API_KEY" -H "Content-Type: application/json" -d '{"business_name":"${data.name}","instagram_username":"${data.ig}","instagram_access_token":"${data.token}","whatsapp_link":"${waLink}","plan":"${data.plan.toLowerCase()}"}'`;
+  document.getElementById('cmd2').textContent =
+    `# После создания клиента — применить промпт:\npython3 scripts/set_client_prompt.py CLIENT_UUID prompts/template.txt`;
+
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function copyCmd(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    el.classList.add('copied');
+    setTimeout(()=>el.classList.remove('copied'), 2000);
+  });
+}
+</script>
+</body>
+</html>
